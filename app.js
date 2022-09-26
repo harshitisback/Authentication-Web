@@ -5,8 +5,13 @@ const bodyparser = require('body-parser');
 const ejs = require('ejs');
 // var encrypt = require('mongoose-encryption');
 // const md5 = require('md5');
+
+var mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 var session = require('express-session')
+const passport = require('passport');
+const passportL = require('passport-local-mongoose');
+
 
 
 const saltRounds = 10;
@@ -20,7 +25,17 @@ app.use(bodyparser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
 
-var mongoose = require('mongoose');
+// app.set('trust proxy', 1) // trust first proxy
+app.use(session({
+  secret: 'This is long journey',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: true }
+}))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 //Set up default mongoose connection
 var mongoDB = 'mongodb+srv://amankumartiwari1502:Harsh9575381459@cluster0.2ur35sv.mongodb.net/userDB';
 mongoose.connect(mongoDB);
@@ -37,13 +52,17 @@ var userSchema = new Schema({
     password: String
 });
 
+userSchema.plugin(passportL);
 
 
 // userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ["password"] });
 
 var userModel = mongoose.model('user', userSchema);
 
+passport.use(userModel.createStrategy());
 
+passport.serializeUser(userModel.serializeUser());
+passport.deserializeUser(userModel.deserializeUser());
 
 
 
